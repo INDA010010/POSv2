@@ -89,7 +89,7 @@ if data != []:
             elif command == "chpasswd":
                 chpasswdnew = getpass.getpass(prompt="Enter The New Password: ")
                 chpasswdhashed = hashlib.sha256(chpasswdnew.encode()).hexdigest()
-                c.execute("DELETE * FROM users WHERE username = '"+data[0][0]+"'")
+                c.execute("DELETE FROM users WHERE username = '"+data[0][0]+"'")
                 c.execute("INSERT INTO users VALUES ('"+data[0][0]+"', '"+chpasswdhashed+"', '"+data[0][2]+"')")
                 conn.commit()
                 print("Password Changed")
