@@ -87,7 +87,7 @@ if data != []:
                 for i in usersdata:
                     print(i[0]+", "+i[2])
             elif command == "chpasswd":
-                chpasswdnew = getpass.getpass(promt="Enter The New Password: ")
+                chpasswdnew = getpass.getpass(prompt="Enter The New Password: ")
                 chpasswdhashed = hashlib.sha256(chpasswdnew.encode()).hexdigest()
                 c.execute("DELETE * FROM users WHERE username = '"+data[0][0]+"'")
                 c.execute("INSERT INTO users VALUES ('"+data[0][0]+"', '"+chpasswdhashed+"', '"+data[0][2]+"')")
