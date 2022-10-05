@@ -3,12 +3,13 @@ conn = sqlite3.connect("POS.db")
 c = conn.cursor()
 c.execute("CREATE TABLE IF NOT EXISTS users (username text, password text, usertype text)")
 c.execute("CREATE TABLE IF NOT EXISTS notes (owner text, title text, content text)")
-#c.execute("INSERT INTO users VALUES ('admin', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', 'admin')") Run On First Use
+# Run On First Use:
+#c.execute("INSERT INTO users VALUES ('admin', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', 'admin')") # Run On First Use
 conn.commit()
 username = input("Enter Username: ")
 password = getpass.getpass(prompt='Enter Password: ').encode()
 password = hashlib.sha256(password).hexdigest()
-c.execute("SELECT * FROM users WHERE username = '"+username+"' AND password = '"+password+"'")
+c.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
 data = c.fetchall()
 if data != []:
     if data[0][2] == "admin":
@@ -54,7 +55,7 @@ if data != []:
                 pty.spawn("/bin/bash")
             elif command == "useradd":
                 addusername = input("Enter Username: ")
-                c.execute("SELECT * FROM users WHERE username ='"+addusername+"'")
+                c.execute("SELECT * FROM users WHERE username = ?", addusername)
                 data = c.fetchall()
                 if data == []:
                     addpassword = getpass.getpass(prompt='Enter Password: ').encode()
@@ -62,24 +63,24 @@ if data != []:
                     addusertype = input("Do You Want The User To Be An Admin [y/N] ")
                     if addusertype == "y" or addusertype == "Y" or addusertype == "yes" or addusertype == "Yes":
                         print("Adding Admin")
-                        c.execute("INSERT INTO users VALUES ('"+addusername+"', '"+addpassword+"', 'admin')")
+                        c.execute("INSERT INTO users VALUES (?, ?, 'admin')", (addusername, addpassword))
                         conn.commit()
                     else:
                         print("Adding User")
-                        c.execute("INSERT INTO users VALUES ('"+addusername+"', '"+addpassword+"', 'user')")
+                        c.execute("INSERT INTO users VALUES (?, ?, 'user')", (addusername, addpassword))
                         conn.commit()
                 else:
                     print("Username Is Already In Use")
             elif command == "userdel":
                 delusername = input("Enter Username To Delete: ")
                 if delusername != "":
-                    c.execute("SELECT * FROM users WHERE username ='"+delusername+"'")
+                    c.execute("SELECT * FROM users WHERE username = ?", delusername)
                     deldata = c.fetchall()
                     if deldata != []:
                         delwarning = input("Do You Want To Delete User "+delusername+" [y/N] ")
                         if delwarning == "y" or delwarning == "Y" or delwarning == "yes" or delwarning == "Yes":
-                            c.execute("DELETE FROM users WHERE username = '"+delusername+"'")
-                            c.execute("DELETE FROM notes WHERE owner = '"+delusername+"'")
+                            c.execute("DELETE FROM users WHERE username = ?", delusername)
+                            c.execute("DELETE FROM notes WHERE owner = ?", delusername)
                             conn.commit()
             elif command == "users":
                 c.execute("SELECT * FROM users")
@@ -89,18 +90,18 @@ if data != []:
             elif command == "chpasswd":
                 chpasswdnew = getpass.getpass(prompt="Enter The New Password: ")
                 chpasswdhashed = hashlib.sha256(chpasswdnew.encode()).hexdigest()
-                c.execute("DELETE FROM users WHERE username = '"+data[0][0]+"'")
-                c.execute("INSERT INTO users VALUES ('"+data[0][0]+"', '"+chpasswdhashed+"', '"+data[0][2]+"')")
+                c.execute("DELETE FROM users WHERE username = ?", data[0][0])
+                c.execute("INSERT INTO users VALUES (?, ?, ?)", (data[0][0], chpasswdhashed, data[0][2]))
                 conn.commit()
                 print("Password Changed")
             elif command == "noteadd":
                 noteaddtitle = input("Enter Note Title: ")
-                c.execute("SELECT * FROM notes WHERE title = '"+noteaddtitle+"' AND owner = '"+data[0][0]+"'")
+                c.execute("SELECT * FROM notes WHERE title = ? AND owner = ?", (noteaddtitle, data[0][0]))
                 noteadddata = c.fetchall()
                 if noteadddata == []:
                     noteaddcontent = input("Enter Note Content: ")
                     if noteaddcontent != "":
-                        c.execute("INSERT INTO notes VALUES ('"+data[0][0]+"', '"+noteaddtitle+"', '"+noteaddcontent+"')")
+                        c.execute("INSERT INTO notes VALUES (?, ?, ?)", (data[0][0], noteaddtitle, noteaddcontent))
                         conn.commit()
                         print("Note \""+noteaddtitle+"\" Created")
                     else:
@@ -110,16 +111,16 @@ if data != []:
                     
             elif command == "notedel":
                 notedeltitle = input("Enter Title Of Note To Delete: ")
-                c.execute("SELECT * FROM notes WHERE owner = '"+data[0][0]+"' AND title = '"+notedeltitle+"'")
+                c.execute("SELECT * FROM notes WHERE owner = ? AND title = ?", (data[0][0], notedeltitle))
                 notedeldata = c.fetchall()
                 if notedeldata != []:
-                    c.execute("DELETE FROM notes WHERE owner = '"+data[0][0]+"' AND title = '"+notedeltitle+"'")
+                    c.execute("DELETE FROM notes WHERE owner = ? AND title = ?", (data[0][0], notedeltitle))
                     conn.commit()
                     print("Note \""+notedeltitle+"\" Deleted")
                 else:
                     print("Note Doesn't Exists")
             elif command == "notes":
-                c.execute("SELECT * FROM notes WHERE owner = '"+data[0][0]+"'")
+                c.execute("SELECT * FROM notes WHERE owner = ?", data[0][0])
                 notesdata = c.fetchall()
                 for i in notesdata:
                     print("Title: "+i[1]+"\nContent:\n"+i[2])
@@ -175,43 +176,44 @@ if data != []:
             if command == "clear":
                 os.system("clear")
             elif command == "chpasswd":
-                chpasswdnew = getpass.getpass(promt="Enter The New Password: ")
+                chpasswdnew = getpass.getpass(prompt="Enter The New Password: ")
                 chpasswdhashed = hashlib.sha256(chpasswdnew.encode()).hexdigest()
-                c.execute("DELETE FROM users WHERE username = '"+data[0][0]+"'")
-                c.execute("INSERT INTO users VALUES ('"+data[0][0]+"', '"+chpasswdhashed+"', '"+data[0][2]+"')")
+                c.execute("DELETE FROM users WHERE username = ?", data[0][0])
+                c.execute("INSERT INTO users VALUES (?, ?, ?)", (data[0][0], chpasswdhashed, data[0][2]))
                 conn.commit()
                 print("Password Changed")
             elif command == "noteadd":
                 noteaddtitle = input("Enter Note Title: ")
-                c.execute("SELECT * FROM notes WHERE title = '"+noteaddtitle+"' AND owner = '"+data[0][0]+"'")
+                c.execute("SELECT * FROM notes WHERE title = ? AND owner = ?", (noteaddtitle, data[0][0]))
                 noteadddata = c.fetchall()
                 if noteadddata == []:
                     noteaddcontent = input("Enter Note Content: ")
                     if noteaddcontent != "":
-                        c.execute("INSERT INTO notes VALUES ('"+data[0][0]+"', '"+noteaddtitle+"', '"+noteaddcontent+"')")
+                        c.execute("INSERT INTO notes VALUES (?, ?, ?)", (data[0][0], noteaddtitle, noteaddcontent))
                         conn.commit()
                         print("Note \""+noteaddtitle+"\" Created")
                     else:
                         print("Can't Create A Empty Note")
                 else:
                     print("Note Already Exists")
+                    
             elif command == "notedel":
                 notedeltitle = input("Enter Title Of Note To Delete: ")
-                c.execute("SELECT * FROM notes WHERE owner = '"+data[0][0]+"' AND title = '"+notedeltitle+"'")
+                c.execute("SELECT * FROM notes WHERE owner = ? AND title = ?", (data[0][0], notedeltitle))
                 notedeldata = c.fetchall()
                 if notedeldata != []:
-                    c.execute("DELETE FROM notes WHERE owner = '"+data[0][0]+"' AND title = '"+notedeltitle+"'")
+                    c.execute("DELETE FROM notes WHERE owner = ? AND title = ?", (data[0][0], notedeltitle))
                     conn.commit()
                     print("Note \""+notedeltitle+"\" Deleted")
                 else:
                     print("Note Doesn't Exists")
             elif command == "notes":
-                c.execute("SELECT * FROM notes WHERE owner = '"+data[0][0]+"'")
+                c.execute("SELECT * FROM notes WHERE owner = ?", data[0][0])
                 notesdata = c.fetchall()
                 for i in notesdata:
                     print("Title: "+i[1]+"\nContent:\n"+i[2])
             elif command == "email":
-                mode = input('Do You Want To Write Massage Or Send Text File Content? [m/f] ')
+                email_mode = input('Do You Want To Write Massage Or Send Text File Content? [m/f] ')
                 if email_mode == 'm' or email_mode == 'M':
                     sender = input('Enter Your Gmail Address (You Have To Allow Less Secure Apps!): ')
                     password = getpass.getpass(prompt='Enter Password To Your Email: ')
@@ -251,7 +253,7 @@ if data != []:
             elif command == "whoami":
                 print("Username:",data[0][0],"\nUser Type:",data[0][2])
             elif command == "help":
-                print("clear, noteadd, notedel, notes, email, exit, whoami, help")
+                print("clear, 404, sql, shell, useradd, userdel, users, noteadd, notedel, notes, email, exit, whoami, help")
             else:
                 if command != "":
                     print("Command Not Found: \""+command+"\"")
