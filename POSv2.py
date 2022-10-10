@@ -177,7 +177,7 @@ c.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, 
 
 data = c.fetchall()
 if data != []:
-    if data != "admin" and data != "user":
+    if data[0][2] != "admin" and data[0][2] != "user":
         print("INVALID USER TYPE")
         exit(0)
 
@@ -214,7 +214,6 @@ if data != []:
         elif command == "noteadd":
             noteadd()
 
-                
         elif command == "notedel":
             notedel()
 
@@ -231,7 +230,7 @@ if data != []:
             print("Username:",data[0][0],"\nUser Type:",data[0][2])
         
         elif command == "help":
-            print("clear, 404, sql, shell, useradd, userdel, users, noteadd, notedel, notes, email, exit, whoami, help")
+            print("clear, sql, shell, useradd, userdel, users, noteadd, notedel, notes, email, exit, whoami, help")
         
         else:
             if command != "":
